@@ -6,40 +6,46 @@ const Currency = mongoose.model('Currency')
 
 exports.create = async (req, res, next) => {
     try {
-        let fromCurrency = await Currency.find({
+        let fromCurrency = await Currency.findOne({
             _id: req.body.from_id
         });
 
-        let toCurrency = await Currency.find({
+        let toCurrency = await Currency.findOne({
             _id: req.body.to_id
         });
-        
-        let pair_value = `${fromCurrency[0].symbol}_${toCurrency[0].symbol}`;
-        console.log(pair_value);
 
+        if (fromCurrency === null || toCurrency === null) {
 
-        //check the pair currency is active or not
-        if (fromCurrency[0].status === true && toCurrency[0].status === true) {
-            let pair_data = {
+            fromCurrency === null ? `${res.send(`From_Id    : ${req.body.from_id} is NOT_FOUND`)}` : `${res.send(`To_Id   : ${req.body.to_id} is NOT_FOUND`)}`
 
-                from_id: req.body.from_id,
-                to_id: req.body.to_id,
-                volume: req.body.volume,
-                status: req.body.status,
-                pair: pair_value
+        } else {
+            let pair_value = `${fromCurrency.symbol}_${toCurrency.symbol}`;
+            console.log(pair_value);
+
+            //check the pair currency is active or not
+            if (fromCurrency.status === true && toCurrency.status === true) {
+                let pair_data = {
+
+                    from_id: req.body.from_id,
+                    to_id: req.body.to_id,
+                    volume: req.body.volume,
+                    status: req.body.status,
+                    pair: pair_value
+                }
+
+                let pairData = new Pair(pair_data);
+                let savedPairData = await pairData.save()
+                console.log(savedPairData);
+                res.status(200).send(`the given currency details is successfully created : ${savedPairData}`);
+            } else {
+                console.log(fromCurrency.status === false ?
+                    `${toCurrency.status === false ?'Both currency are inactive':`${fromCurrency.symbol}inactive`}` : `${toCurrency.symbol} inactive `);
+
+                // check which currency is inactive
+                res.status(404).send(fromCurrency.status === false ?
+                    `${toCurrency.status === false ?'Both currency are inactive':`${fromCurrency.symbol}inactive`}` : `${toCurrency.symbol} inactive `)
             }
 
-            let pairData = new Pair(pair_data);
-            let savedPairData = await pairData.save()
-            console.log(savedPairData);
-            res.status(200).send(`the given currency details is successfully created : ${savedPairData}`);
-        } else {
-            console.log(fromCurrency[0].status === false ?
-                `${toCurrency[0].status === false ?'Both currency are inactive':`${fromCurrency[0].symbol}inactive`}` : `${toCurrency[0].symbol} inactive `);
-
-            // check which currency is inactive
-            res.status(404).send(fromCurrency[0].status === false ?
-                `${toCurrency[0].status === false ?'Both currency are inactive':`${fromCurrency[0].symbol}inactive`}` : `${toCurrency[0].symbol} inactive `)
         }
     } catch (error) {
         next(error);
@@ -72,12 +78,12 @@ exports.getAllPair = async (req, res, next) => {
 
             $unwind: "$to_currency"
 
-        },{
-            "$project":{
-                "from_currency.symbol":1,
-                "to_currency.symbol":1,
-                "from_currency.status":1,
-                "to_currency.status":1
+        }, {
+            "$project": {
+                "from_currency.symbol": 1,
+                "to_currency.symbol": 1,
+                "from_currency.status": 1,
+                "to_currency.status": 1
             }
         }
     ]);
@@ -120,12 +126,12 @@ exports.getSinglePair = async (req, res, next) => {
 
             $unwind: "$to_currency"
 
-        },{
-            "$project":{
-                "from_currency.symbol":1,
-                "to_currency.symbol":1,
-                "from_currency.status":1,
-                "to_currency.status":1
+        }, {
+            "$project": {
+                "from_currency.symbol": 1,
+                "to_currency.symbol": 1,
+                "from_currency.status": 1,
+                "to_currency.status": 1
             }
         }
     ]);

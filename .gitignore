@@ -1,1 +1,8 @@
 node_modules
+ fromCurrency === null ?
+        `${toCurrency=== null ?
+                `${res.send({Error_Message : "both from_id & to_id NOT_Found in the database"})}`
+            :
+                `${res.send({Error_Message : `from_id : ${req.body.from_id} NOT_Found in the database`})}` }` 
+    : 
+        `${res.send({Error_Message : `to_id : ${req.body.to_id} NOT_FOUND in the database`})}`
